@@ -1,4 +1,4 @@
-setwd("C:/Users/Roberto/Desktop/rstudio_default/covid")
+setwd("C:/Users/Roberto/Desktop/rstudio_default/covid/covid_vaccinazioni_ita/wd-vaccinazioni")
 
 library(tidyverse)
 library(data.table)
@@ -17,14 +17,15 @@ lista_regioni <- fread("lista_regioni.csv") %>%
 vac_all <- vac_all %>% 
   left_join(lista_regioni, by = c("area" = "sigla")) %>% 
   mutate(nome_area = str_replace_all(nome_area, "Provincia Autonoma ", ""),
-         nome_area = str_replace_all(nome_area, "Valle d'Aosta / Vallée d'Aoste", "Valle d'Aosta"))
+         nome_area = str_replace_all(nome_area, "Valle d'Aosta / VallÃ©e d'Aoste", "Valle d'Aosta"))
 
 ####data prep####
 
 vac_all <- vac_all %>%
   filter(data_somministrazione > "2020-12-01") %>% 
   rename(n_vaccinazioni = totale,
-         data = data_somministrazione)
+         data = data_somministrazione) %>% 
+  mutate(data = as_date(data))
 
 vac_select <- vac_all %>% group_by(area) %>% arrange(data) %>% mutate(tot_vaccinazioni = cumsum(n_vaccinazioni),
                                                  tot_prime_dosi = cumsum(prima_dose),
@@ -80,6 +81,31 @@ vac_ita_all <- vac_ita %>%
   full_join(vac_select, by = colnames2) %>% 
   relocate(nome_area, .after= data)
 
+vac_ita_longer <- vac_ita %>% 
+  select(data, tot_prime_dosi, tot_seconde_dosi) %>% 
+  pivot_longer(!data, names_to = "dose", names_prefix = "tot_", values_to = "num_dosi") %>% 
+  mutate(dose = factor(dose, levels = c("seconde_dosi", "prime_dosi"))) 
+fwrite(vac_ita_longer, "vac_ita_longer.csv")
+
+vac_reg_longer <- vac_ita_all %>%
+  select(data, area, tot_prime_dosi, tot_seconde_dosi) %>% 
+  pivot_longer(!c(data, area), names_to = "dose", names_prefix = "tot_", values_to = "num_dosi") %>% 
+  mutate(dose = factor(dose, levels = c("seconde_dosi", "prime_dosi")))
+fwrite(vac_reg_longer, "vac_reg_longer.csv")
+
+vac_ita_longer_day <- vac_ita %>% 
+  select(data, prima_dose, seconda_dose) %>% 
+  pivot_longer(!data, names_to = "dose", values_to = "num_dosi") %>% 
+  mutate(dose = factor(dose, levels = c("seconda_dose", "prima_dose"))) 
+fwrite(vac_ita_longer_day, "vac_ita_longer_day.csv")
+
+vac_reg_longer_day <- vac_ita_all %>%
+  select(data, area, prima_dose, seconda_dose) %>% 
+  pivot_longer(!c(data, area), names_to = "dose", values_to = "num_dosi") %>% 
+  mutate(dose = factor(dose, levels = c("seconda_dose", "prima_dose"))) 
+fwrite(vac_reg_longer_day, "vac_reg_longer_day.csv")
+
+
 #### viz ####
 
 vac_ita %>% ggplot() +
@@ -106,19 +132,16 @@ vac_ita %>% ggplot() +
   theme_minimal() +
   ylab("vaccinati/pop")
 
-vac_ita_longer <- vac_ita %>% 
-  select(data, tot_prime_dosi, tot_seconde_dosi) %>% 
-  pivot_longer(!data, names_to = "dose", names_prefix = "tot_", values_to = "num_dosi") %>% 
-  mutate(dose = factor(dose, levels = c("seconde_dosi", "prime_dosi"))) 
-
 vac_ita_longer %>% 
   ggplot() +
   geom_area(aes(data, num_dosi, fill = dose)) +
   scale_fill_manual(values = c("darkred", "steelblue")) +
   #guides(fill = "none") +
   theme_minimal()
+ 
+#esempio trend: lazio
 
-vac_lazio_trend <- vac_ita_all %>%
+vac_ita_all %>%
   filter(area == "LAZ") %>% 
   select(data, tot_prime_dosi, tot_seconde_dosi) %>% 
   pivot_longer(!data, names_to = "dose", names_prefix = "tot_", values_to = "num_dosi") %>% 
@@ -129,10 +152,7 @@ vac_lazio_trend <- vac_ita_all %>%
   #guides(fill = "none") +
   theme_minimal()
 
-vac_trend_plot <- vac_ita_all %>%
-  select(data, area, tot_prime_dosi, tot_seconde_dosi) %>% 
-  pivot_longer(!c(data, area), names_to = "dose", names_prefix = "tot_", values_to = "num_dosi") %>% 
-  mutate(dose = factor(dose, levels = c("seconde_dosi", "prime_dosi")))  %>% 
+vac_trend_plot <- vac_reg_longer %>% 
   ggplot() +
   geom_area(aes(data, num_dosi, fill = dose)) +
   scale_fill_manual(values = c("darkred", "steelblue")) +
@@ -140,7 +160,8 @@ vac_trend_plot <- vac_ita_all %>%
   facet_wrap(~area, scales = "free_y") +
   theme_minimal() +
   ggtitle("Dosi cumulative vaccino, Italia e regioni")
-vac_trend
+vac_trend_plot
+
 ggsave("vac_trend.png", width = 20, height = 12)
 
 #### summaries ####
