@@ -85,24 +85,56 @@ dosi_ita_longer <- vac_ita %>%
   select(data, tot_prime_dosi, tot_seconde_dosi) %>% 
   pivot_longer(!data, names_to = "dose", names_prefix = "tot_", values_to = "num_dosi") %>% 
   mutate(dose = factor(dose, levels = c("seconde_dosi", "prime_dosi"))) 
-fwrite(vac_ita_longer, "vac_ita_longer.csv")
+fwrite(dosi_ita_longer, "vac_ita_longer.csv")
 
 dosi_reg_longer <- vac_ita_all %>%
   select(data, area, tot_prime_dosi, tot_seconde_dosi) %>% 
   pivot_longer(!c(data, area), names_to = "dose", names_prefix = "tot_", values_to = "num_dosi") %>% 
   mutate(dose = factor(dose, levels = c("seconde_dosi", "prime_dosi")))
-fwrite(vac_reg_longer, "vac_reg_longer.csv")
+fwrite(dosi_reg_longer, "vac_reg_longer.csv")
 
 dosi_ita_longer_day <- vac_ita %>% 
   select(data, prima_dose, seconda_dose) %>% 
   pivot_longer(!data, names_to = "dose", values_to = "num_dosi") %>% 
   mutate(dose = factor(dose, levels = c("seconda_dose", "prima_dose"))) 
-fwrite(vac_ita_longer_day, "vac_ita_longer_day.csv")
+fwrite(dosi_ita_longer_day, "vac_ita_longer_day.csv")
 
 dosi_reg_longer_day <- vac_ita_all %>%
   select(data, area, prima_dose, seconda_dose) %>% 
   pivot_longer(!c(data, area), names_to = "dose", values_to = "num_dosi") %>% 
   mutate(dose = factor(dose, levels = c("seconda_dose", "prima_dose"))) 
-fwrite(vac_reg_longer_day, "vac_reg_longer_day.csv")
+fwrite(dosi_reg_longer_day, "vac_reg_longer_day.csv")
+
+
+vac_rank_plot <- vac_ita_all %>% 
+  filter(data == max(data)) %>% 
+  ggplot(aes(reorder(nome_area, tasso_vaccinazioni), tasso_vaccinazioni)) +
+  geom_col(aes(fill = ifelse(nome_area == "TOTALE", "Normal", "Highlighted"))) +
+  coord_flip() +
+  xlab("regione") +
+  guides(fill = "none") +
+  geom_label(nudge_y = 0.3, aes(label = round(tasso_vaccinazioni, digits = 2))) +
+  theme_minimal()
+
+vac_rank_sd_plot <- vac_ita_all %>% 
+  filter(data == max(data)) %>% 
+  ggplot(aes(reorder(nome_area, tasso_seconde_dosi), tasso_seconde_dosi)) +
+  geom_col(aes(fill = ifelse(nome_area == "TOTALE", "Normal", "Highlighted"))) +
+  coord_flip() +
+  xlab("regione") +
+  guides(fill = "none") +
+  geom_label(nudge_y = 0.1, aes(label = round(tasso_seconde_dosi, digits = 2))) +
+  theme_minimal()
+
+
+
+vac_trend_plot <- dosi_reg_longer %>% 
+  ggplot() +
+  geom_area(aes(data, num_dosi, fill = dose)) +
+  scale_fill_manual(values = c("darkred", "steelblue")) +
+  #guides(fill = "none") +
+  facet_wrap(~area, scales = "free_y") +
+  theme_minimal() +
+  ggtitle("Dosi cumulative vaccino, Italia e regioni")
 
 save.image("C:/Users/Roberto/Desktop/rstudio_default/covid/covid_vaccinazioni_ita/wd-vaccinazioni/vac_ita_dataprep.RData")

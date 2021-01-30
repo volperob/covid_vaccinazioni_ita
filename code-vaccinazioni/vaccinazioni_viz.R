@@ -26,7 +26,7 @@ vac_ita %>% ggplot() +
   theme_minimal() +
   ylab("vaccinati/pop")
 
-vac_ita_longer %>% 
+dosi_ita_longer %>% 
   ggplot() +
   geom_area(aes(data, num_dosi, fill = dose)) +
   scale_fill_manual(values = c("darkred", "steelblue")) +
@@ -46,7 +46,7 @@ vac_ita_all %>%
   #guides(fill = "none") +
   theme_minimal()
 
-vac_trend_plot <- vac_reg_longer %>% 
+vac_trend_plot <- dosi_reg_longer %>% 
   ggplot() +
   geom_area(aes(data, num_dosi, fill = dose)) +
   scale_fill_manual(values = c("darkred", "steelblue")) +
@@ -57,6 +57,7 @@ vac_trend_plot <- vac_reg_longer %>%
 vac_trend_plot
 
 ggsave("vac_trend.png", width = 20, height = 12)
+
 
 #### summaries ####
 
