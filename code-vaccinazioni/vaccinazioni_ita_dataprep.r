@@ -126,8 +126,6 @@ vac_rank_sd_plot <- vac_ita_all %>%
   geom_label(nudge_y = 0.1, aes(label = round(tasso_seconde_dosi, digits = 2))) +
   theme_minimal()
 
-
-
 vac_trend_plot <- dosi_reg_longer %>% 
   ggplot() +
   geom_area(aes(data, num_dosi, fill = dose)) +

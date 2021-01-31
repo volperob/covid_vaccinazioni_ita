@@ -10,3 +10,4 @@ vac_ita_all %>% filter(data == max(data)) %>% select(-c(data, area, media_vaccin
   arrange(desc(tasso_vaccinazioni)) %>% View
 vac_ita %>% arrange(desc(data))
 vac_ita_today
+
