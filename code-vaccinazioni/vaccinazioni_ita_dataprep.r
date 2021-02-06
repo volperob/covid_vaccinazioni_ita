@@ -67,8 +67,24 @@ vac_ita <- vac_select %>%
   ) %>% 
   select(-popolazione) 
 
-
-vac_ita_today = vac_ita %>% filter(data == max(data)) %>% 
+vac_ita_today <- vac_select %>% 
+  group_by(area) %>% 
+  filter(data == max(data)) %>%
+  ungroup() %>% 
+  summarise(tot_vaccinazioni = sum(tot_vaccinazioni),
+            n_vaccinazioni = sum(n_vaccinazioni),
+            prima_dose = sum(prima_dose),
+            tot_prime_dosi = sum(tot_prime_dosi),
+            seconda_dose = sum(seconda_dose),
+            tot_seconde_dosi = sum(tot_seconde_dosi),
+            popolazione = sum(popolazione)) %>% 
+  mutate(popolazione = 60242096,
+         tasso_vaccinazioni = (tot_vaccinazioni / popolazione)*100,
+         tasso_seconde_dosi = (tot_seconde_dosi / popolazione)*100,
+         tasso_vaccinazioni_giornaliero = (n_vaccinazioni / popolazione)*100
+         #media_vaccinazioni_3gg = frollmean(x = n_vaccinazioni, n = 3, fill = 0
+  ) %>% 
+  select(-popolazione) %>% 
   rename(vacc_oggi = n_vaccinazioni)
 
 colnames <- colnames(vac_select)
